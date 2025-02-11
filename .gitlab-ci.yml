@@ -1,0 +1,47 @@
+image: python:3.11-slim
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  MONGODB_URI: "mongodb://localhost:27017/"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+cache:
+  paths:
+    - .pip-cache/
+    - venv/
+
+before_script:
+  - python -V
+  - python -m venv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+
+test:
+  stage: test
+  services:
+    - mongo:latest
+  script:
+    - python -m pytest tests/
+
+build:
+  stage: build
+  script:
+    - echo "Building Docker image..."
+    - docker build -t ollama-chat-app .
+  only:
+    - main
+    - tags
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying application..."
+    # Add your deployment commands here
+  only:
+    - main
+  environment:
+    name: production
