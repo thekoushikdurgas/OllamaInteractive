@@ -1,5 +1,6 @@
 import streamlit as st
-from utils import get_ollama_response, format_message, get_available_models, get_model_details
+import asyncio
+from utils import get_ollama_response, get_ollama_response_async, format_message, get_available_models, get_model_details
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 from typing import Union, Generator
@@ -112,6 +113,11 @@ with st.sidebar.expander("Advanced Settings"):
             value=True,
             help="Show responses as they are generated"
         )
+        use_generate = st.checkbox(
+            "Use Generate Mode",
+            value=False,
+            help="Use generation instead of chat mode"
+        )
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
@@ -178,12 +184,13 @@ with st.container():
             # Stream response with progress bar
             full_response = ""
             with st.spinner("AI is thinking..."):
-                for response_chunk in get_ollama_response(
+                async for response_chunk in get_ollama_response_async(
                     user_input,
                     model,
                     stream=True,
                     temperature=temperature,
-                    image_path=image_path
+                    image_path=image_path,
+                    use_generate=use_generate
                 ):
                     if isinstance(response_chunk, str):
                         full_response += response_chunk
@@ -212,8 +219,7 @@ with st.container():
                     )
 
         st.session_state.messages = get_chat_history()
-        # Clear input
-        st.session_state.user_input = ""
+        st.session_state["user_input"] = "" #Corrected this line
         # Remove uploaded image
         if image_path and os.path.exists(image_path):
             os.remove(image_path)

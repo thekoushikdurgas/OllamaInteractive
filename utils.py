@@ -8,6 +8,61 @@ import logging
 
 logger = logging.getLogger(__name__) #Added logger
 
+async def get_ollama_response_async(
+    prompt: str,
+    model: str = "llama2",
+    stream: bool = False,
+    temperature: float = 0.7,
+    context: Optional[List[int]] = None,
+    image_path: Optional[str] = None,
+    use_generate: bool = False
+) -> Union[str, Generator[str, None, None]]:
+    client = ollama.AsyncClient()
+    try:
+        message = {"role": "user", "content": prompt}
+        if image_path:
+            try:
+                image = Image(value=Path(image_path))
+                message["images"] = [image]
+            except Exception as e:
+                return f"Image Error: {str(e)}"
+
+        options = {"temperature": temperature, "context": context}
+        
+        if stream:
+            response = await client.chat(
+                model=model,
+                messages=[message],
+                stream=True,
+                options=options
+            )
+            async for chunk in response:
+                yield chunk['message']['content']
+        else:
+            cached_response = get_cached_response(prompt, model)
+            if cached_response:
+                return cached_response
+                
+            if use_generate:
+                response = await client.generate(
+                    model=model,
+                    prompt=prompt,
+                    options=options
+                )
+                response_text = response['response']
+            else:
+                response = await client.chat(
+                    model=model,
+                    messages=[message],
+                    options=options
+                )
+                response_text = response['message']['content']
+            cache_response(prompt, model, response_text)
+            return response_text
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 def get_ollama_response(
     prompt: str,
     model: str = "llama2",
