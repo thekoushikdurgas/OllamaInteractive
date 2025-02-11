@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import get_ollama_response, format_message, get_available_models, get_model_details, encode_image
+from utils import get_ollama_response, format_message, get_available_models, get_model_details
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 

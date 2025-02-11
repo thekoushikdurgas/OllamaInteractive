@@ -1,5 +1,5 @@
 import ollama
-from ollama._types import Message, ChatResponse, Image, Tool
+from ollama._types import Message, ChatResponse, Image, Tool, ListResponse
 from db_utils import cache_response, get_cached_response
 from typing import List, Optional, Generator, Union, Any, Dict
 import base64
@@ -84,16 +84,7 @@ def get_ollama_response(
         return f"Error: {str(e)}"
 
 def format_message(message: str, role: str) -> str:
-    """
-    Format message with markdown and styling.
-
-    Args:
-        message: Content of the message
-        role: Role of the message sender ('user' or 'assistant')
-
-    Returns:
-        Formatted HTML string with appropriate styling
-    """
+    """Format message with markdown and styling"""
     if role == "user":
         return f"<div class='message-container'><div class='user-message'>{message}</div></div>"
     else:
@@ -107,7 +98,7 @@ def get_available_models() -> List[Dict[str, Any]]:
         List of dictionaries containing detailed model information
     """
     try:
-        response = ollama.list()
+        response: ListResponse = ollama.list()
         models = []
         # Sort models by name for consistent display
         for model in sorted(response.models, key=lambda x: x.model):
