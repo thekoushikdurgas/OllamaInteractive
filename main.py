@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import get_ollama_response, format_message, get_available_models, get_model_details
+from utils import get_ollama_response, format_message, get_available_models, get_model_details, encode_image
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 
@@ -68,6 +68,25 @@ for message in st.session_state.messages:
 
 # Chat input
 with st.container():
+    # Image upload
+    uploaded_file = st.file_uploader(
+        "Upload an image (optional)",
+        type=["png", "jpg", "jpeg", "webp"],
+        help="Upload an image to discuss with the AI"
+    )
+
+    # Save uploaded image
+    image_path = None
+    if uploaded_file:
+        # Create images directory if it doesn't exist
+        os.makedirs("uploaded_images", exist_ok=True)
+        image_path = f"uploaded_images/{uploaded_file.name}"
+        with open(image_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        # Display uploaded image
+        st.image(image_path, caption="Uploaded Image")
+
     col1, col2 = st.columns([5,1])
 
     with col1:
@@ -81,7 +100,7 @@ with st.container():
     with col2:
         send_button = st.button("Send")
 
-    if send_button and user_input:
+    if send_button and (user_input or image_path):
         # Save and display user message
         save_message(user_input, "user", model)
         st.session_state.messages = get_chat_history()
@@ -96,7 +115,8 @@ with st.container():
                 user_input,
                 model,
                 stream=True,
-                temperature=temperature
+                temperature=temperature,
+                image_path=image_path
             ):
                 full_response += response_chunk
                 response_container.markdown(
@@ -112,7 +132,8 @@ with st.container():
                 response = get_ollama_response(
                     user_input,
                     model,
-                    temperature=temperature
+                    temperature=temperature,
+                    image_path=image_path
                 )
                 # Save and display assistant response
                 save_message(response, "assistant", model)
@@ -124,6 +145,9 @@ with st.container():
         st.session_state.messages = get_chat_history()
         # Clear input
         st.session_state.user_input = ""
+        # Remove uploaded image
+        if image_path and os.path.exists(image_path):
+            os.remove(image_path)
         # Rerun to update chat display
         st.experimental_rerun()
 
