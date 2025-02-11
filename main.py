@@ -28,6 +28,28 @@ if "messages" not in st.session_state:
 # Model selection section
 st.sidebar.title("Chat Settings")
 
+# Model creation section
+st.sidebar.markdown("### Model Management")
+with st.sidebar.expander("Create Custom Model"):
+    new_model_name = st.text_input("Model Name", placeholder="my-assistant")
+    base_model = st.selectbox(
+        "Base Model",
+        options=["llama2", "llama2-uncensored", "mistral", "codellama"],
+        index=0
+    )
+    system_prompt = st.text_area(
+        "System Prompt",
+        placeholder="You are a helpful assistant..."
+    )
+    if st.button("Create Model"):
+        if new_model_name and system_prompt:
+            with st.spinner("Creating model..."):
+                if asyncio.run(create_model(new_model_name, base_model, system_prompt)):
+                    st.success(f"Model '{new_model_name}' created successfully!")
+                    st.experimental_rerun()
+                else:
+                    st.error("Failed to create model")
+
 # Model selection with description
 st.sidebar.markdown("### Available Models")
 st.sidebar.markdown("Choose a model to chat with:")

@@ -220,6 +220,21 @@ def get_available_models() -> List[Dict[str, Any]]:
             for name in ["llama2", "mistral", "codellama"]
         ]
 
+async def create_model(name: str, base_model: str, system_prompt: str) -> bool:
+    """Create a new Ollama model with custom system prompt"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.create(
+            model=name,
+            from_=base_model,
+            system=system_prompt
+        )
+        logger.info(f"Model created successfully: {name}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create model: {str(e)}")
+        return False
+
 def get_model_details(model: str) -> Dict[str, Any]:
     """
     Get detailed information about a specific model.
