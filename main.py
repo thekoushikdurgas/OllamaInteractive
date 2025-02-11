@@ -20,7 +20,8 @@ load_css()
 
 # Initialize chat history from MongoDB
 if "messages" not in st.session_state:
-    st.session_state.messages = get_chat_history()
+    messages = get_chat_history()
+    st.session_state.messages = messages if messages is not None else []
 
 # Model selection section
 st.sidebar.title("Chat Settings")

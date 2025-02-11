@@ -8,20 +8,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # MongoDB connection with fallback to local instance
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://0.0.0.0:27017/')
+DEFAULT_RETRY_ATTEMPTS = 3
+DEFAULT_RETRY_DELAY = 5
 
 def get_db_connection():
-    """Get MongoDB connection with error handling"""
-    try:
-        client = MongoClient(MONGODB_URI)
-        # Test the connection
-        client.admin.command('ping')
-        db = client['chat_app']
-        logger.info("Successfully connected to MongoDB")
-        return db
-    except Exception as e:
-        logger.error(f"Failed to connect to MongoDB: {str(e)}")
-        return None
+    """Get MongoDB connection with retry logic"""
+    for attempt in range(DEFAULT_RETRY_ATTEMPTS):
+        try:
+            client = MongoClient(MONGODB_URI, 
+                               serverSelectionTimeoutMS=5000,
+                               connectTimeoutMS=5000)
+            client.admin.command('ping')
+            db = client['chat_app']
+            logger.info("Successfully connected to MongoDB")
+            return db
+        except Exception as e:
+            logger.warning(f"Connection attempt {attempt + 1} failed: {str(e)}")
+            if attempt < DEFAULT_RETRY_ATTEMPTS - 1:
+                time.sleep(DEFAULT_RETRY_DELAY)
+            else:
+                logger.error("All connection attempts failed")
+                return None
 
 def save_message(message_content: str, role: str, model: str):
     """Save a message to MongoDB"""
