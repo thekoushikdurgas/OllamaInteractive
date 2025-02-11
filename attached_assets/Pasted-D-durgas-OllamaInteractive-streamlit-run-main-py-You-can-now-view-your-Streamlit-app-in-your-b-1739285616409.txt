@@ -1,0 +1,47 @@
+D:\durgas\OllamaInteractive>streamlit run main.py
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8502
+  Network URL: http://192.168.1.2:8502
+
+WARNING:db_utils:Connection attempt 1 failed: 0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67ab63ea3edea2e118f994e8, topology_type: Unknown, servers: [<ServerDescription ('0.0.0.0', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms)')>]>
+ERROR:db_utils:Failed to retrieve chat history: name 'time' is not defined
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+WARNING:db_utils:Connection attempt 1 failed: 0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67ab640f3edea2e118f994e9, topology_type: Unknown, servers: [<ServerDescription ('0.0.0.0', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms)')>]>
+ERROR:db_utils:Failed to save message: name 'time' is not defined
+WARNING:db_utils:Connection attempt 1 failed: 0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67ab64143edea2e118f994ea, topology_type: Unknown, servers: [<ServerDescription ('0.0.0.0', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms)')>]>
+ERROR:db_utils:Failed to retrieve chat history: name 'time' is not defined
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/chat "HTTP/1.1 200 OK"
+WARNING:db_utils:Connection attempt 1 failed: 0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67ab644b3edea2e118f994eb, topology_type: Unknown, servers: [<ServerDescription ('0.0.0.0', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms)')>]>
+ERROR:db_utils:Failed to save message: name 'time' is not defined
+WARNING:db_utils:Connection attempt 1 failed: 0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67ab64513edea2e118f994ec, topology_type: Unknown, servers: [<ServerDescription ('0.0.0.0', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('0.0.0.0:27017: [WinError 10049] The requested address is not valid in its context (configured timeouts: socketTimeoutMS: 5000.0ms, connectTimeoutMS: 5000.0ms)')>]>
+ERROR:db_utils:Failed to retrieve chat history: name 'time' is not defined
+2025-02-11 20:23:10.374 Uncaught app exception
+Traceback (most recent call last):
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 552, in _run_script
+    exec(code, module.__dict__)
+  File "D:\durgas\OllamaInteractive\main.py", line 216, in <module>
+    st.session_state.user_input = ""
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\metrics_util.py", line 358, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\state\session_state_proxy.py", line 125, in __setattr__
+    self[key] = value
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\metrics_util.py", line 358, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\state\session_state_proxy.py", line 103, in __setitem__
+    get_session_state()[key] = value
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\state\safe_session_state.py", line 120, in __setitem__
+    self._state[key] = value
+  File "C:\Users\durga\AppData\Local\Programs\Python\Python310\lib\site-packages\streamlit\runtime\state\session_state.py", line 443, in __setitem__
+    raise StreamlitAPIException(
+streamlit.errors.StreamlitAPIException: `st.session_state.user_input` cannot be modified after the widget with key `user_input` is instantiated.
