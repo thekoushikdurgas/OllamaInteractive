@@ -21,41 +21,54 @@ load_css()
 if "messages" not in st.session_state:
     st.session_state.messages = get_chat_history()
 
-# Model selection section in main.py
+# Model selection section
 st.sidebar.title("Chat Settings")
 
 # Model selection with description
-st.sidebar.markdown("### Select Model")
+st.sidebar.markdown("### Available Models")
 st.sidebar.markdown("Choose a model to chat with:")
 
-# Get available models
+# Get available models with details
 available_models = get_available_models()
 
+# Create model selection options
+model_options = {model_info['name']: model_info for model_info in available_models}
+
 # Model selection
-model = st.sidebar.selectbox(
-    "Available Models",
-    available_models,
-    index=0 if "llama2" in available_models else 0,
+selected_model = st.sidebar.selectbox(
+    "Select Model",
+    options=list(model_options.keys()),
+    index=0 if "llama2" in model_options else 0,
     help="Select the AI model you want to chat with"
 )
 
-# Show model details in an organized way
-if model:
-    model_info = get_model_details(model)
+# Show detailed model information
+if selected_model:
+    model_info = model_options[selected_model]
     st.sidebar.markdown("### Model Information")
 
-    # Display model details in a clean format
-    for key, value in model_info.items():
-        st.sidebar.markdown(f"**{key}:** {value}")
+    # Display basic info
+    st.sidebar.markdown(f"**Size:** {model_info['size_mb']} MB")
+
+    # Display detailed information if available
+    if model_info['details']:
+        details = model_info['details']
+        st.sidebar.markdown("#### Technical Details")
+        st.sidebar.markdown(f"**Format:** {details.get('format', 'Unknown')}")
+        st.sidebar.markdown(f"**Family:** {details.get('family', 'Unknown')}")
+        st.sidebar.markdown(f"**Parameters:** {details.get('parameter_size', 'Unknown')}")
+        st.sidebar.markdown(f"**Quantization:** {details.get('quantization_level', 'None')}")
 
     # Add model capabilities hint
-    if "llama" in model.lower():
+    if "llama" in selected_model.lower():
         st.sidebar.info("💡 This model is optimized for general text generation and conversation.")
-    elif "codellama" in model.lower():
+    elif "codellama" in selected_model.lower():
         st.sidebar.info("💡 This model specializes in code generation and technical discussions.")
-    elif "mistral" in model.lower():
+    elif "mistral" in selected_model.lower():
         st.sidebar.info("💡 This model offers balanced performance for various tasks.")
 
+# Use selected_model instead of model variable in the rest of the code
+model = selected_model
 
 # Advanced settings expander
 with st.sidebar.expander("Advanced Settings"):
