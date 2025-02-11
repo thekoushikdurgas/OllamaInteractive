@@ -15,7 +15,8 @@ async def get_ollama_response_async(
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
     image_path: Optional[str] = None,
-    use_generate: bool = False
+    use_generate: bool = False,
+    use_tools: bool = False
 ) -> Union[str, Generator[str, None, None]]:
     client = ollama.AsyncClient()
     try:
@@ -28,7 +29,7 @@ async def get_ollama_response_async(
                 return f"Image Error: {str(e)}"
 
         options = {"temperature": temperature, "context": context}
-        
+
         if stream:
             response = await client.chat(
                 model=model,
@@ -42,7 +43,7 @@ async def get_ollama_response_async(
             cached_response = get_cached_response(prompt, model)
             if cached_response:
                 return cached_response
-                
+
             if use_generate:
                 response = await client.generate(
                     model=model,
@@ -51,12 +52,40 @@ async def get_ollama_response_async(
                 )
                 response_text = response['response']
             else:
+                from tools import AVAILABLE_TOOLS, TOOL_DEFINITIONS
+
+                chat_options = {**options}
+                if use_tools:
+                    chat_options['tools'] = TOOL_DEFINITIONS
+
                 response = await client.chat(
                     model=model,
                     messages=[message],
-                    options=options
+                    options=chat_options
                 )
-                response_text = response['message']['content']
+
+                if response.message.tool_calls and use_tools:
+                    tool_outputs = []
+                    for tool in response.message.tool_calls:
+                        if function_to_call := AVAILABLE_TOOLS.get(tool.function.name):
+                            try:
+                                output = function_to_call(**tool.function.arguments)
+                                tool_outputs.append({
+                                    'role': 'tool',
+                                    'content': str(output),
+                                    'name': tool.function.name
+                                })
+                            except Exception as e:
+                                logger.error(f"Tool call failed: {str(e)}")
+
+                    if tool_outputs:
+                        messages = [message] + [response.message] + tool_outputs
+                        final_response = await client.chat(model=model, messages=messages)
+                        response_text = final_response.message.content
+                    else:
+                        response_text = response.message.content
+                else:
+                    response_text = response.message.content
             cache_response(prompt, model, response_text)
             return response_text
 

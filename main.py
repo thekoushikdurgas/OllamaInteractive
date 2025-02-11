@@ -118,6 +118,11 @@ with st.sidebar.expander("Advanced Settings"):
             value=False,
             help="Use generation instead of chat mode"
         )
+        use_tools = st.checkbox(
+            "Enable Tools",
+            value=False,
+            help="Allow model to use mathematical tools"
+        )
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
@@ -190,7 +195,8 @@ with st.container():
                     stream=True,
                     temperature=temperature,
                     image_path=image_path,
-                    use_generate=use_generate
+                    use_generate=use_generate,
+                    use_tools=use_tools
                 ):
                     if isinstance(response_chunk, str):
                         full_response += response_chunk
