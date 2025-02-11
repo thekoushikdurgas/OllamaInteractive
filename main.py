@@ -19,9 +19,10 @@ def load_css():
 
 load_css()
 
-# Initialize chat history from MongoDB
+# Initialize chat history from MongoDB with limit
 if "messages" not in st.session_state:
-    messages = get_chat_history()
+    history_limit = st.sidebar.slider("Chat History Length", 5, 50, 10)
+    messages = get_chat_history(limit=history_limit)
     st.session_state.messages = messages if messages is not None else []
 
 # Model selection section

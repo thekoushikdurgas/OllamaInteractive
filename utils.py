@@ -14,13 +14,15 @@ async def get_ollama_response_async(
     stream: bool = False,
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
+    messages: Optional[List[Dict[str, str]]] = None,
     image_path: Optional[str] = None,
     use_generate: bool = False,
     use_tools: bool = False
 ) -> Union[str, Generator[str, None, None]]:
     client = ollama.AsyncClient()
     try:
-        message = {"role": "user", "content": prompt}
+        current_messages = messages or []
+        current_messages.append({"role": "user", "content": prompt})
         if image_path:
             try:
                 image = Image(value=Path(image_path))
