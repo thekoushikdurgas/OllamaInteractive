@@ -5,10 +5,11 @@ import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+import time
 logger = logging.getLogger(__name__)
 
 # MongoDB connection with fallback to local instance
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://0.0.0.0:27017/')
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DEFAULT_RETRY_ATTEMPTS = 3
 DEFAULT_RETRY_DELAY = 5
 

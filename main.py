@@ -212,8 +212,7 @@ with st.container():
                     )
 
         st.session_state.messages = get_chat_history()
-        # Clear input
-        st.session_state.user_input = ""
+        st.session_state["user_input"] = "" #Corrected this line
         # Remove uploaded image
         if image_path and os.path.exists(image_path):
             os.remove(image_path)
