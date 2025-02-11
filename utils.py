@@ -235,6 +235,25 @@ async def create_model(name: str, base_model: str, system_prompt: str) -> bool:
         logger.error(f"Failed to create model: {str(e)}")
         return False
 
+async def generate_stream_response(
+    prompt: str,
+    model: str = "llama2",
+    temperature: float = 0.7
+) -> Generator[str, None, None]:
+    """Stream generate response from Ollama model"""
+    try:
+        client = ollama.AsyncClient()
+        async for part in client.generate(
+            model=model,
+            prompt=prompt,
+            options={"temperature": temperature},
+            stream=True
+        ):
+            yield part['response']
+    except Exception as e:
+        logger.error(f"Generate streaming failed: {str(e)}")
+        yield f"Error: {str(e)}"
+
 async def generate_fill_middle(
     prefix: str,
     suffix: str,

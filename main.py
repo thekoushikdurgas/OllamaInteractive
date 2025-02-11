@@ -232,7 +232,19 @@ with st.container():
             # Stream response with progress bar
             full_response = ""
             with st.spinner("AI is thinking..."):
-                async for response_chunk in get_ollama_response_async(
+                if use_generate:
+                    async for response_chunk in generate_stream_response(
+                        user_input,
+                        model,
+                        temperature=temperature
+                    ):
+                        full_response += response_chunk
+                        response_container.markdown(
+                            format_message(full_response, "assistant"),
+                            unsafe_allow_html=True
+                        )
+                else:
+                    async for response_chunk in get_ollama_response_async(
                     user_input,
                     model,
                     stream=True,
