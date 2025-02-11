@@ -99,23 +99,40 @@ def format_message(message: str, role: str) -> str:
     else:
         return f"<div class='message-container'><div class='assistant-message'>{message}</div></div>"
 
-def get_available_models() -> List[str]:
+def get_available_models() -> List[Dict[str, Any]]:
     """
     Get list of available Ollama models with detailed information.
 
     Returns:
-        List of model names available in the Ollama instance
+        List of dictionaries containing detailed model information
     """
     try:
         response = ollama.list()
         models = []
         # Sort models by name for consistent display
-        for model in sorted(response['models'], key=lambda x: x['name']):
-            models.append(model['name'])
+        for model in sorted(response.models, key=lambda x: x.model):
+            model_info = {
+                'name': model.model,
+                'size_mb': f'{(model.size.real / 1024 / 1024):.2f}',
+                'details': {}
+            }
+            if model.details:
+                model_info['details'] = {
+                    'format': model.details.format,
+                    'family': model.details.family,
+                    'parameter_size': model.details.parameter_size,
+                    'quantization_level': model.details.quantization_level
+                }
+            models.append(model_info)
+        logger.info(f"Successfully fetched {len(models)} models")
         return models
     except Exception as e:
         logger.error(f"Failed to fetch models: {str(e)}")
-        return ["llama2", "mistral", "codellama"]  # Default fallback models
+        # Return default models with minimal info if fetch fails
+        return [
+            {'name': name, 'size_mb': 'N/A', 'details': {}} 
+            for name in ["llama2", "mistral", "codellama"]
+        ]
 
 def get_model_details(model: str) -> Dict[str, Any]:
     """
@@ -132,7 +149,9 @@ def get_model_details(model: str) -> Dict[str, Any]:
         # Format the details for better display
         formatted_details = {
             "Model Name": model,
+            "Size": details.size.real / 1024 / 1024 if hasattr(details, 'size') else 'Unknown',
             "Family": details.get('details', {}).get('family', 'Unknown'),
+            "Format": details.get('details', {}).get('format', 'Unknown'),
             "Parameter Size": details.get('details', {}).get('parameter_size', 'Unknown'),
             "Quantization": details.get('details', {}).get('quantization_level', 'None'),
             "License": details.get('license', 'Unknown'),
