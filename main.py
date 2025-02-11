@@ -21,23 +21,41 @@ load_css()
 if "messages" not in st.session_state:
     st.session_state.messages = get_chat_history()
 
-# Sidebar configuration
+# Model selection section in main.py
 st.sidebar.title("Chat Settings")
+
+# Model selection with description
+st.sidebar.markdown("### Select Model")
+st.sidebar.markdown("Choose a model to chat with:")
 
 # Get available models
 available_models = get_available_models()
 
-# Model selection and info
+# Model selection
 model = st.sidebar.selectbox(
-    "Select Model",
+    "Available Models",
     available_models,
-    index=0 if "llama2" in available_models else 0
+    index=0 if "llama2" in available_models else 0,
+    help="Select the AI model you want to chat with"
 )
 
-# Show model details
-model_info = get_model_details(model)
-st.sidebar.markdown("### Model Information")
-st.sidebar.json(model_info)
+# Show model details in an organized way
+if model:
+    model_info = get_model_details(model)
+    st.sidebar.markdown("### Model Information")
+
+    # Display model details in a clean format
+    for key, value in model_info.items():
+        st.sidebar.markdown(f"**{key}:** {value}")
+
+    # Add model capabilities hint
+    if "llama" in model.lower():
+        st.sidebar.info("💡 This model is optimized for general text generation and conversation.")
+    elif "codellama" in model.lower():
+        st.sidebar.info("💡 This model specializes in code generation and technical discussions.")
+    elif "mistral" in model.lower():
+        st.sidebar.info("💡 This model offers balanced performance for various tasks.")
+
 
 # Advanced settings expander
 with st.sidebar.expander("Advanced Settings"):

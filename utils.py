@@ -4,6 +4,9 @@ from db_utils import cache_response, get_cached_response
 from typing import List, Optional, Generator, Union, Any, Dict
 import base64
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__) #Added logger
 
 def get_ollama_response(
     prompt: str,
@@ -14,7 +17,18 @@ def get_ollama_response(
     image_path: Optional[str] = None
 ) -> Union[str, Generator[str, None, None]]:
     """
-    Get response from Ollama model with streaming support and image handling
+    Get response from Ollama model with streaming support and image handling.
+
+    Args:
+        prompt: Text prompt to send to the model
+        model: Name of the Ollama model to use
+        stream: Whether to stream the response
+        temperature: Controls randomness in the response
+        context: Optional context from previous interactions
+        image_path: Optional path to image file for multimodal models
+
+    Returns:
+        Either a string response or a generator of response chunks if streaming
     """
     try:
         # Create message object
@@ -71,7 +85,14 @@ def get_ollama_response(
 
 def format_message(message: str, role: str) -> str:
     """
-    Format message with markdown and styling
+    Format message with markdown and styling.
+
+    Args:
+        message: Content of the message
+        role: Role of the message sender ('user' or 'assistant')
+
+    Returns:
+        Formatted HTML string with appropriate styling
     """
     if role == "user":
         return f"<div class='message-container'><div class='user-message'>{message}</div></div>"
@@ -80,32 +101,109 @@ def format_message(message: str, role: str) -> str:
 
 def get_available_models() -> List[str]:
     """
-    Get list of available Ollama models with error handling
+    Get list of available Ollama models with detailed information.
+
+    Returns:
+        List of model names available in the Ollama instance
     """
     try:
         response = ollama.list()
-        return [model['name'] for model in response['models']]
+        models = []
+        # Sort models by name for consistent display
+        for model in sorted(response['models'], key=lambda x: x['name']):
+            models.append(model['name'])
+        return models
     except Exception as e:
+        logger.error(f"Failed to fetch models: {str(e)}")
         return ["llama2", "mistral", "codellama"]  # Default fallback models
 
 def get_model_details(model: str) -> Dict[str, Any]:
     """
-    Get detailed information about a specific model
+    Get detailed information about a specific model.
+
+    Args:
+        model: Name of the model to get information about
+
+    Returns:
+        Dictionary containing formatted model details
     """
     try:
-        return ollama.show(model=model)
-    except Exception:
+        details = ollama.show(model=model)
+        # Format the details for better display
+        formatted_details = {
+            "Model Name": model,
+            "Family": details.get('details', {}).get('family', 'Unknown'),
+            "Parameter Size": details.get('details', {}).get('parameter_size', 'Unknown'),
+            "Quantization": details.get('details', {}).get('quantization_level', 'None'),
+            "License": details.get('license', 'Unknown'),
+            "Modified": details.get('modified_at', 'Unknown')
+        }
+        return formatted_details
+    except Exception as e:
+        logger.error(f"Failed to get model details: {str(e)}")
         return {
-            "model": model,
-            "details": "Model information unavailable"
+            "Model Name": model,
+            "Status": "Details unavailable",
+            "Error": str(e)
         }
 
 def encode_image(image_path: str) -> Optional[str]:
     """
-    Encode image to base64 for UI display
+    Encode image to base64 for UI display.
+
+    Args:
+        image_path: Path to the image file
+
+    Returns:
+        Base64 encoded string of the image or None if encoding fails
     """
     try:
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode()
     except Exception:
         return None
+
+def create_tool_from_function(func: Any) -> Tool:
+    """
+    Convert a Python function to an Ollama chat tool.
+
+    Args:
+        func: Python function to convert to a tool
+
+    Returns:
+        Ollama Tool object that can be used in chat conversations
+    """
+    try:
+        from inspect import getdoc, signature
+
+        # Get function signature and docstring
+        sig = signature(func)
+        doc = getdoc(func) or ""
+
+        # Create tool parameters
+        parameters = {
+            name: {
+                "type": str(param.annotation.__name__ if param.annotation != param.empty else "string"),
+                "description": ""
+            }
+            for name, param in sig.parameters.items()
+        }
+
+        # Create tool object
+        tool = Tool(
+            type="function",
+            function=Tool.Function(
+                name=func.__name__,
+                description=doc.split("\n")[0],
+                parameters=Tool.Function.Parameters(
+                    type="object",
+                    properties=parameters,
+                    required=[name for name, param in sig.parameters.items()
+                            if param.default == param.empty]
+                )
+            )
+        )
+
+        return tool
+    except Exception as e:
+        raise ValueError(f"Failed to create tool from function: {str(e)}")

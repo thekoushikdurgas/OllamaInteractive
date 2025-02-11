@@ -27,7 +27,7 @@ def save_message(message_content: str, role: str, model: str):
     """Save a message to MongoDB"""
     try:
         db = get_db_connection()
-        if db:
+        if db is not None:  # Fixed boolean check
             messages = db['messages']
             message_doc = {
                 'content': message_content,
@@ -46,7 +46,7 @@ def get_chat_history():
     """Retrieve chat history from MongoDB"""
     try:
         db = get_db_connection()
-        if db:
+        if db is not None:  # Fixed boolean check
             messages = db['messages']
             return list(messages.find().sort('timestamp', 1))
         return []
@@ -58,7 +58,7 @@ def cache_response(prompt: str, model: str, response: str):
     """Cache an Ollama response"""
     try:
         db = get_db_connection()
-        if db:
+        if db is not None:  # Fixed boolean check
             cache = db['response_cache']
             cache_doc = {
                 'prompt': prompt,
@@ -75,7 +75,7 @@ def get_cached_response(prompt: str, model: str):
     """Get cached response if available"""
     try:
         db = get_db_connection()
-        if db:
+        if db is not None:  # Fixed boolean check
             cache = db['response_cache']
             cached = cache.find_one({
                 'prompt': prompt,
@@ -92,7 +92,7 @@ def clear_chat_history():
     """Clear all chat messages"""
     try:
         db = get_db_connection()
-        if db:
+        if db is not None:  # Fixed boolean check
             messages = db['messages']
             messages.delete_many({})
             logger.info("Chat history cleared successfully")
