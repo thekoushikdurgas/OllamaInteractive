@@ -207,7 +207,7 @@ with st.container():
 
     if send_button and (user_input or image_path):
         # Save and display user message
-        save_message(user_input, "user", model)
+        save_message_with_embedding(user_input, "user", model)
         st.session_state.messages = get_chat_history()
 
         # Response container with loading indicator
@@ -260,6 +260,21 @@ with st.container():
             os.remove(image_path)
         # Rerun to update chat display
         st.experimental_rerun()
+
+# Semantic search
+with st.sidebar.expander("Semantic Search", expanded=False):
+    search_query = st.text_input("Search Chat History")
+    if search_query:
+        similar_messages = find_similar_messages(search_query, model)
+        for msg in similar_messages:
+            st.markdown(f"""
+            <div style='padding: 10px; border: 1px solid #ddd; margin: 5px 0;'>
+                <div>{msg['content']}</div>
+                <div style='color: #666; font-size: 0.8em;'>
+                    Similarity: {msg['similarity']:.2f}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # Clear chat button with confirmation in danger zone
 with st.sidebar.expander("Danger Zone", expanded=False):
