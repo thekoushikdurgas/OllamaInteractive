@@ -1,0 +1,27 @@
+D:\durgas\OllamaInteractive>streamlit run main.py
+
+  You can now view your Streamlit app in your browser.
+
+  URL: http://0.0.0.0:5000
+
+2025-02-11 20:02:29.233 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+2025-02-11 20:02:32.441 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+ERROR:db_utils:Failed to connect to MongoDB: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67ab5f7e7f580c59e9bd9999, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+ERROR:db_utils:Failed to connect to MongoDB: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67ab5f807f580c59e9bd999a, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+2025-02-11 20:03:08.398 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+2025-02-11 20:03:08.617 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+2025-02-11 20:03:18.443 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+2025-02-11 20:03:18.585 "Source Sans Pro" is an invalid value for theme.font. Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to "sans serif".
+INFO:httpx:HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+INFO:utils:Successfully fetched 22 models
+ERROR:db_utils:Failed to connect to MongoDB: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67ab5fae7f580c59e9bd999b, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+ERROR:db_utils:Failed to connect to MongoDB: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67ab5fcd7f580c59e9bd999c, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/chat "HTTP/1.1 200 OK"
