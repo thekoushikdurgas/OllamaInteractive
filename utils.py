@@ -1,21 +1,32 @@
 import ollama
-from ollama._types import Message, ChatResponse
+from ollama._types import Message, ChatResponse, Image, Tool
 from db_utils import cache_response, get_cached_response
 from typing import List, Optional, Generator, Union, Any, Dict
+import base64
+from pathlib import Path
 
 def get_ollama_response(
     prompt: str,
     model: str = "llama2",
     stream: bool = False,
     temperature: float = 0.7,
-    context: Optional[List[int]] = None
+    context: Optional[List[int]] = None,
+    image_path: Optional[str] = None
 ) -> Union[str, Generator[str, None, None]]:
     """
-    Get response from Ollama model with streaming support
+    Get response from Ollama model with streaming support and image handling
     """
     try:
         # Create message object
         message: Message = {"role": "user", "content": prompt}
+
+        # Handle image if provided
+        if image_path:
+            try:
+                image = Image(value=Path(image_path))
+                message["images"] = [image]
+            except Exception as e:
+                return f"Image Error: {str(e)}"
 
         # Set model parameters
         options: Dict[str, Any] = {
@@ -88,3 +99,13 @@ def get_model_details(model: str) -> Dict[str, Any]:
             "model": model,
             "details": "Model information unavailable"
         }
+
+def encode_image(image_path: str) -> Optional[str]:
+    """
+    Encode image to base64 for UI display
+    """
+    try:
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode()
+    except Exception:
+        return None
