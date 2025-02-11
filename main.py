@@ -233,7 +233,30 @@ with st.container():
             full_response = ""
             with st.spinner("AI is thinking..."):
                 if use_generate:
-                    async for response_chunk in generate_stream_response(
+                    if stream:
+                        async for response_chunk in generate_stream_response(
+                            user_input,
+                            model,
+                            temperature=temperature
+                        ):
+                            full_response += response_chunk
+                            response_container.markdown(
+                                format_message(full_response, "assistant"),
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        response = asyncio.run(generate_direct_response(
+                            user_input,
+                            model,
+                            temperature=temperature
+                        ))
+                        full_response = response
+                        response_container.markdown(
+                            format_message(full_response, "assistant"),
+                            unsafe_allow_html=True
+                        )
+                else:
+                    async for response_chunk in get_ollama_response_async(
                         user_input,
                         model,
                         temperature=temperature

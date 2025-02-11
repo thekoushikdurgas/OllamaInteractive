@@ -8,6 +8,24 @@ import logging
 
 logger = logging.getLogger(__name__) #Added logger
 
+async def generate_direct_response(
+    prompt: str,
+    model: str = "llama2",
+    temperature: float = 0.7
+) -> str:
+    """Generate direct response using Ollama generate endpoint"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.generate(
+            model=model,
+            prompt=prompt,
+            options={"temperature": temperature}
+        )
+        return response['response']
+    except Exception as e:
+        logger.error(f"Generate response failed: {str(e)}")
+        return f"Error: {str(e)}"
+
 async def get_ollama_response_async(
     prompt: str,
     model: str = "llama2",
