@@ -51,13 +51,14 @@ def save_message(message_content: str, role: str, model: str):
         logger.error(f"Failed to save message: {str(e)}")
     return False
 
-def get_chat_history():
-    """Retrieve chat history from MongoDB"""
+def get_chat_history(limit: int = 10):
+    """Retrieve chat history from MongoDB with optional limit"""
     try:
         db = get_db_connection()
-        if db is not None:  # Fixed boolean check
+        if db is not None:
             messages = db['messages']
-            return list(messages.find().sort('timestamp', 1))
+            history = list(messages.find().sort('timestamp', -1).limit(limit))
+            return [{'role': msg['role'], 'content': msg['content']} for msg in history][::-1]
         return []
     except Exception as e:
         logger.error(f"Failed to retrieve chat history: {str(e)}")
