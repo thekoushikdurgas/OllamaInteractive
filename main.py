@@ -1,5 +1,6 @@
 import streamlit as st
-from utils import get_ollama_response, format_message, get_available_models, get_model_details
+import asyncio
+from utils import get_ollama_response, get_ollama_response_async, format_message, get_available_models, get_model_details
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 from typing import Union, Generator
@@ -178,7 +179,7 @@ with st.container():
             # Stream response with progress bar
             full_response = ""
             with st.spinner("AI is thinking..."):
-                for response_chunk in get_ollama_response(
+                async for response_chunk in get_ollama_response_async(
                     user_input,
                     model,
                     stream=True,
