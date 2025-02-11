@@ -100,7 +100,8 @@ def get_ollama_response(
     stream: bool = False,
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
-    image_path: Optional[str] = None
+    image_path: Optional[str] = None,
+    use_chat: bool = True
 ) -> Union[str, Generator[str, None, None]]:
     """
     Get response from Ollama model with streaming support and image handling.
@@ -151,12 +152,20 @@ def get_ollama_response(
                 return cached_response
 
             # Get chat response from Ollama
-            response: ChatResponse = ollama.chat(
-                model=model,
-                messages=[message],
-                options=options
-            )
-            response_text = response['message']['content']
+            if use_chat:
+                response = ollama.chat(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    options=options
+                )
+                response_text = response['message']['content']
+            else:
+                response = ollama.generate(
+                    model=model,
+                    prompt=prompt,
+                    options=options
+                )
+                response_text = response['response']
 
             # Cache the response
             cache_response(prompt, model, response_text)

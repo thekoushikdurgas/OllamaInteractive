@@ -100,6 +100,11 @@ model = selected_model
 with st.sidebar.expander("Advanced Settings"):
     col1, col2 = st.columns(2)
     with col1:
+        use_chat = st.checkbox(
+            "Use Chat Mode",
+            value=True,
+            help="Toggle between chat and generate mode"
+        )
         temperature = st.slider(
             "Temperature",
             min_value=0.1,
@@ -215,7 +220,8 @@ with st.container():
                     user_input,
                     model,
                     temperature=temperature,
-                    image_path=image_path
+                    image_path=image_path,
+                    use_chat=use_chat
                 )
                 # Save and display assistant response
                 if isinstance(response, str):
