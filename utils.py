@@ -14,7 +14,8 @@ async def get_ollama_response_async(
     stream: bool = False,
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
-    image_path: Optional[str] = None
+    image_path: Optional[str] = None,
+    use_generate: bool = False
 ) -> Union[str, Generator[str, None, None]]:
     client = ollama.AsyncClient()
     try:
@@ -41,13 +42,21 @@ async def get_ollama_response_async(
             cached_response = get_cached_response(prompt, model)
             if cached_response:
                 return cached_response
-
-            response = await client.chat(
-                model=model,
-                messages=[message],
-                options=options
-            )
-            response_text = response['message']['content']
+                
+            if use_generate:
+                response = await client.generate(
+                    model=model,
+                    prompt=prompt,
+                    options=options
+                )
+                response_text = response['response']
+            else:
+                response = await client.chat(
+                    model=model,
+                    messages=[message],
+                    options=options
+                )
+                response_text = response['message']['content']
             cache_response(prompt, model, response_text)
             return response_text
 

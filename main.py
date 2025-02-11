@@ -113,6 +113,11 @@ with st.sidebar.expander("Advanced Settings"):
             value=True,
             help="Show responses as they are generated"
         )
+        use_generate = st.checkbox(
+            "Use Generate Mode",
+            value=False,
+            help="Use generation instead of chat mode"
+        )
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
@@ -184,7 +189,8 @@ with st.container():
                     model,
                     stream=True,
                     temperature=temperature,
-                    image_path=image_path
+                    image_path=image_path,
+                    use_generate=use_generate
                 ):
                     if isinstance(response_chunk, str):
                         full_response += response_chunk
