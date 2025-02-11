@@ -1,5 +1,6 @@
 import streamlit as st
 from utils import get_ollama_response, format_message
+from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 
 # Page configuration
@@ -16,9 +17,9 @@ def load_css():
 
 load_css()
 
-# Initialize session state
+# Initialize chat history from MongoDB
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = get_chat_history()
 
 # Sidebar configuration
 st.sidebar.title("Chat Settings")
@@ -42,44 +43,46 @@ temperature = st.sidebar.slider(
 # Main chat interface
 st.title("Chat with Ollama 🤖")
 
-# Display chat messages
+# Display chat messages from MongoDB
 for message in st.session_state.messages:
     st.markdown(
-        format_message(message["content"], message["role"]),
+        format_message(message['content'], message['role']),
         unsafe_allow_html=True
     )
 
 # Chat input
 with st.container():
-    # Create two columns for input and button
     col1, col2 = st.columns([5,1])
-    
+
     with col1:
         user_input = st.text_input("Type your message", key="user_input", label_visibility="collapsed")
-    
+
     with col2:
         send_button = st.button("Send")
 
     if send_button and user_input:
-        # Add user message to chat
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        
+        # Save and display user message
+        save_message(user_input, "user", model)
+        st.session_state.messages = get_chat_history()
+
         # Show loading spinner while getting response
         with st.spinner("Thinking..."):
             # Get assistant response
             response = get_ollama_response(user_input, model)
-            
-            # Add assistant response to chat
-            st.session_state.messages.append({"role": "assistant", "content": response})
-        
+
+            # Save and display assistant response
+            save_message(response, "assistant", model)
+            st.session_state.messages = get_chat_history()
+
         # Clear input
         st.session_state.user_input = ""
-        
+
         # Rerun to update chat display
         st.experimental_rerun()
 
 # Clear chat button
 if st.sidebar.button("Clear Chat"):
+    clear_chat_history()
     st.session_state.messages = []
     st.experimental_rerun()
 
