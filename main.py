@@ -118,6 +118,21 @@ if selected_model:
 # Use selected_model instead of model variable
 model = selected_model
 
+# Fill-in-middle feature
+with st.sidebar.expander("Fill-in-middle Generation", expanded=False):
+    prefix = st.text_area("Prefix", placeholder="def function_name():")
+    suffix = st.text_area("Suffix", placeholder="    return result")
+    if st.button("Generate Middle"):
+        if prefix and suffix:
+            with st.spinner("Generating..."):
+                middle_text = asyncio.run(generate_fill_middle(
+                    prefix=prefix,
+                    suffix=suffix,
+                    model=model,
+                    temperature=temperature
+                ))
+                st.code(prefix + middle_text + suffix, language="python")
+
 # Advanced settings expander with improved UI
 with st.sidebar.expander("Advanced Settings"):
     col1, col2 = st.columns(2)

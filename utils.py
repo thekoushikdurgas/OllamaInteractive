@@ -235,6 +235,32 @@ async def create_model(name: str, base_model: str, system_prompt: str) -> bool:
         logger.error(f"Failed to create model: {str(e)}")
         return False
 
+async def generate_fill_middle(
+    prefix: str,
+    suffix: str,
+    model: str = "codellama",
+    temperature: float = 0,
+    top_p: float = 0.9
+) -> str:
+    """Generate text to fill between prefix and suffix"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.generate(
+            model=model,
+            prompt=prefix,
+            suffix=suffix,
+            options={
+                'num_predict': 128,
+                'temperature': temperature,
+                'top_p': top_p,
+                'stop': ['< EOT >'],
+            }
+        )
+        return response['response']
+    except Exception as e:
+        logger.error(f"Fill-in-middle generation failed: {str(e)}")
+        return f"Error: {str(e)}"
+
 def get_model_details(model: str) -> Dict[str, Any]:
     """
     Get detailed information about a specific model.
