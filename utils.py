@@ -218,15 +218,18 @@ def get_available_models() -> List[Dict[str, Any]]:
             model_info = {
                 'name': model.model,
                 'size_mb': f'{(model.size.real / 1024 / 1024):.2f}',
-                'details': {}
-            }
-            if model.details:
-                model_info['details'] = {
-                    'format': model.details.format,
-                    'family': model.details.family,
-                    'parameter_size': model.details.parameter_size,
-                    'quantization_level': model.details.quantization_level
+                'details': {},
+                'created_at': model.modified_at,
+                'digest': model.digest[:12] if model.digest else None,
+                'details': {
+                    'format': model.details.format if model.details else None,
+                    'family': model.details.family if model.details else None,
+                    'parameter_size': model.details.parameter_size if model.details else None,
+                    'quantization_level': model.details.quantization_level if model.details else None
                 }
+            }
+            # Store model info in MongoDB for history
+            store_model_info(model_info)
             models.append(model_info)
         logger.info(f"Successfully fetched {len(models)} models")
         return models
