@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import get_ollama_response, format_message
+from utils import get_ollama_response, format_message, get_available_models
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
 
@@ -24,11 +24,14 @@ if "messages" not in st.session_state:
 # Sidebar configuration
 st.sidebar.title("Chat Settings")
 
+# Get available models
+available_models = get_available_models()
+
 # Model selection
 model = st.sidebar.selectbox(
     "Select Model",
-    ["llama2", "mistral", "codellama"],
-    index=0
+    available_models,
+    index=0 if "llama2" in available_models else 0
 )
 
 # Temperature slider
@@ -37,7 +40,8 @@ temperature = st.sidebar.slider(
     min_value=0.1,
     max_value=2.0,
     value=0.7,
-    step=0.1
+    step=0.1,
+    help="Higher values make the output more creative but less focused"
 )
 
 # Main chat interface
@@ -55,7 +59,12 @@ with st.container():
     col1, col2 = st.columns([5,1])
 
     with col1:
-        user_input = st.text_input("Type your message", key="user_input", label_visibility="collapsed")
+        user_input = st.text_input(
+            "Type your message",
+            key="user_input",
+            label_visibility="collapsed",
+            placeholder="Type your message here..."
+        )
 
     with col2:
         send_button = st.button("Send")
@@ -80,18 +89,21 @@ with st.container():
         # Rerun to update chat display
         st.experimental_rerun()
 
-# Clear chat button
+# Clear chat button with confirmation
 if st.sidebar.button("Clear Chat"):
-    clear_chat_history()
-    st.session_state.messages = []
-    st.experimental_rerun()
+    if st.sidebar.button("Confirm Clear Chat"):
+        clear_chat_history()
+        st.session_state.messages = []
+        st.experimental_rerun()
 
-# Footer
+# Footer with model info
 st.markdown("---")
 st.markdown(
-    """
+    f"""
     <div style='text-align: center; color: #666666; padding: 1rem;'>
-        Built with Streamlit and Ollama
+        <p>Current Model: {model}</p>
+        <p>Temperature: {temperature}</p>
+        <p>Built with Streamlit and Ollama</p>
     </div>
     """,
     unsafe_allow_html=True
