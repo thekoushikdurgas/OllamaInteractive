@@ -2,6 +2,7 @@ import streamlit as st
 from utils import get_ollama_response, format_message, get_available_models, get_model_details
 from db_utils import save_message, get_chat_history, clear_chat_history
 import os
+from typing import Union, Generator
 
 # Page configuration
 st.set_page_config(
@@ -31,8 +32,12 @@ st.sidebar.markdown("Choose a model to chat with:")
 # Get available models with details
 available_models = get_available_models()
 
-# Create model selection options
-model_options = {model_info['name']: model_info for model_info in available_models}
+# Create model selection options with loading indicator
+if not available_models:
+    st.sidebar.warning("⚠️ Loading models... Please make sure Ollama is running.")
+    model_options = {"default": {"name": "default"}}
+else:
+    model_options = {model_info['name']: model_info for model_info in available_models}
 
 # Model selection
 selected_model = st.sidebar.selectbox(
@@ -47,59 +52,83 @@ if selected_model:
     model_info = model_options[selected_model]
     st.sidebar.markdown("### Model Information")
 
-    # Display basic info
-    st.sidebar.markdown(f"**Size:** {model_info['size_mb']} MB")
+    # Display basic info with improved formatting
+    if isinstance(model_info, dict) and 'size_mb' in model_info:
+        try:
+            size_mb = float(model_info['size_mb'])
+            size_display = f"{size_mb:.1f} MB"
+            st.sidebar.metric("Model Size", size_display)
+        except (ValueError, TypeError):
+            st.sidebar.text(f"Size: {model_info.get('size_mb', 'Unknown')} MB")
 
     # Display detailed information if available
-    if model_info['details']:
+    if isinstance(model_info, dict) and model_info.get('details'):
         details = model_info['details']
-        st.sidebar.markdown("#### Technical Details")
-        st.sidebar.markdown(f"**Format:** {details.get('format', 'Unknown')}")
-        st.sidebar.markdown(f"**Family:** {details.get('family', 'Unknown')}")
-        st.sidebar.markdown(f"**Parameters:** {details.get('parameter_size', 'Unknown')}")
-        st.sidebar.markdown(f"**Quantization:** {details.get('quantization_level', 'None')}")
+        with st.sidebar.expander("Technical Details", expanded=False):
+            specs = {
+                "Format": str(details.get('format', 'Unknown')),
+                "Family": str(details.get('family', 'Unknown')),
+                "Parameters": str(details.get('parameter_size', 'Unknown')),
+                "Quantization": str(details.get('quantization_level', 'None'))
+            }
+            for key, value in specs.items():
+                st.markdown(f"**{key}:** {value}")
 
-    # Add model capabilities hint
-    if "llama" in selected_model.lower():
-        st.sidebar.info("💡 This model is optimized for general text generation and conversation.")
-    elif "codellama" in selected_model.lower():
-        st.sidebar.info("💡 This model specializes in code generation and technical discussions.")
-    elif "mistral" in selected_model.lower():
-        st.sidebar.info("💡 This model offers balanced performance for various tasks.")
+    # Add model capabilities hint with icons
+    model_hints = {
+        "llama": ("💡 General text generation and conversation", "#28a745"),
+        "codellama": ("💻 Code generation and technical discussions", "#0056b3"),
+        "mistral": ("⚖️ Balanced performance for various tasks", "#6f42c1"),
+        "neural-chat": ("🗣️ Optimized for natural conversations", "#e83e8c")
+    }
 
-# Use selected_model instead of model variable in the rest of the code
+    for key, (hint, color) in model_hints.items():
+        if key in selected_model.lower():
+            st.sidebar.markdown(
+                f"""<div style='padding: 10px; background-color: {color}20; 
+                border-left: 3px solid {color}; margin: 10px 0;'>{hint}</div>""",
+                unsafe_allow_html=True
+            )
+
+# Use selected_model instead of model variable
 model = selected_model
 
-# Advanced settings expander
+# Advanced settings expander with improved UI
 with st.sidebar.expander("Advanced Settings"):
-    temperature = st.slider(
-        "Temperature",
-        min_value=0.1,
-        max_value=2.0,
-        value=0.7,
-        step=0.1,
-        help="Higher values make the output more creative but less focused"
-    )
-
-    use_streaming = st.checkbox(
-        "Enable Streaming",
-        value=True,
-        help="Show responses as they are generated"
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        temperature = st.slider(
+            "Temperature",
+            min_value=0.1,
+            max_value=2.0,
+            value=0.7,
+            step=0.1,
+            help="Higher values make the output more creative but less focused"
+        )
+    with col2:
+        use_streaming = st.checkbox(
+            "Enable Streaming",
+            value=True,
+            help="Show responses as they are generated"
+        )
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
 
-# Display chat messages from MongoDB
+# Display status indicator
+if not available_models:
+    st.error("⚠️ Unable to connect to Ollama server. Please check if it's running.")
+
+# Display chat messages from MongoDB with improved styling
 for message in st.session_state.messages:
     st.markdown(
         format_message(message['content'], message['role']),
         unsafe_allow_html=True
     )
 
-# Chat input
+# Chat input with improved layout
 with st.container():
-    # Image upload
+    # Image upload with preview
     uploaded_file = st.file_uploader(
         "Upload an image (optional)",
         type=["png", "jpg", "jpeg", "webp"],
@@ -115,11 +144,17 @@ with st.container():
         with open(image_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # Display uploaded image
-        st.image(image_path, caption="Uploaded Image")
+        # Display uploaded image in a card-like container
+        st.markdown(
+            f"""<div style='padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
+            <p style='margin-bottom: 5px; color: #666;'>Uploaded Image:</p>
+            <img src='data:image/png;base64,{uploaded_file.getvalue().hex()}' 
+            style='max-width: 300px; border-radius: 5px;'></div>""",
+            unsafe_allow_html=True
+        )
 
+    # Chat input with send button
     col1, col2 = st.columns([5,1])
-
     with col1:
         user_input = st.text_input(
             "Type your message",
@@ -127,39 +162,40 @@ with st.container():
             label_visibility="collapsed",
             placeholder="Type your message here..."
         )
-
     with col2:
-        send_button = st.button("Send")
+        send_button = st.button("Send", use_container_width=True)
 
     if send_button and (user_input or image_path):
         # Save and display user message
         save_message(user_input, "user", model)
         st.session_state.messages = get_chat_history()
 
-        # Response container
+        # Response container with loading indicator
         response_container = st.empty()
 
         if use_streaming:
-            # Stream response
+            # Stream response with progress bar
             full_response = ""
-            for response_chunk in get_ollama_response(
-                user_input,
-                model,
-                stream=True,
-                temperature=temperature,
-                image_path=image_path
-            ):
-                full_response += response_chunk
-                response_container.markdown(
-                    format_message(full_response, "assistant"),
-                    unsafe_allow_html=True
-                )
+            with st.spinner("AI is thinking..."):
+                for response_chunk in get_ollama_response(
+                    user_input,
+                    model,
+                    stream=True,
+                    temperature=temperature,
+                    image_path=image_path
+                ):
+                    if isinstance(response_chunk, str):
+                        full_response += response_chunk
+                        response_container.markdown(
+                            format_message(full_response, "assistant"),
+                            unsafe_allow_html=True
+                        )
 
             # Save full response
             save_message(full_response, "assistant", model)
         else:
             # Show loading spinner while getting response
-            with st.spinner("Thinking..."):
+            with st.spinner("AI is thinking..."):
                 response = get_ollama_response(
                     user_input,
                     model,
@@ -167,11 +203,12 @@ with st.container():
                     image_path=image_path
                 )
                 # Save and display assistant response
-                save_message(response, "assistant", model)
-                response_container.markdown(
-                    format_message(response, "assistant"),
-                    unsafe_allow_html=True
-                )
+                if isinstance(response, str):
+                    save_message(response, "assistant", model)
+                    response_container.markdown(
+                        format_message(response, "assistant"),
+                        unsafe_allow_html=True
+                    )
 
         st.session_state.messages = get_chat_history()
         # Clear input
@@ -182,15 +219,21 @@ with st.container():
         # Rerun to update chat display
         st.experimental_rerun()
 
-# Clear chat button with confirmation
-with st.sidebar.expander("Danger Zone"):
-    if st.button("Clear Chat History"):
-        if st.button("⚠️ Confirm Clear Chat"):
-            clear_chat_history()
-            st.session_state.messages = []
-            st.experimental_rerun()
+# Clear chat button with confirmation in danger zone
+with st.sidebar.expander("Danger Zone", expanded=False):
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Clear Chat", type="primary"):
+            st.session_state.confirm_clear = True
+    with col2:
+        if st.session_state.get("confirm_clear", False):
+            if st.button("⚠️ Confirm", type="secondary"):
+                clear_chat_history()
+                st.session_state.messages = []
+                st.session_state.confirm_clear = False
+                st.experimental_rerun()
 
-# Footer with model info
+# Footer with model info and status
 st.markdown("---")
 st.markdown(
     f"""
@@ -198,7 +241,7 @@ st.markdown(
         <p>Current Model: {model}</p>
         <p>Temperature: {temperature}</p>
         <p>Streaming: {'Enabled' if use_streaming else 'Disabled'}</p>
-        <p>Built with Streamlit and Ollama</p>
+        <p>Built with ❤️ using Streamlit and Ollama</p>
     </div>
     """,
     unsafe_allow_html=True
