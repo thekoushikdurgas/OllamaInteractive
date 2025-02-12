@@ -166,6 +166,8 @@ with st.sidebar.expander("Advanced Settings"):
             value=False,
             help="Allow model to use mathematical tools"
         )
+        use_vision = st.checkbox("Use Vision Model", value=False) # Added use_vision checkbox
+
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
@@ -248,7 +250,8 @@ with st.container():
                         response = asyncio.run(generate_direct_response(
                             user_input,
                             model,
-                            temperature=temperature
+                            temperature=temperature,
+                            vision_model=use_vision #Added vision_model parameter
                         ))
                         full_response = response
                         response_container.markdown(

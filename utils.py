@@ -119,7 +119,8 @@ def get_ollama_response(
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
     image_path: Optional[str] = None,
-    use_chat: bool = True
+    use_chat: bool = True,
+    vision_model: bool = False
 ) -> Union[str, Generator[str, None, None]]:
     """
     Get response from Ollama model with streaming support and image handling.
@@ -142,9 +143,15 @@ def get_ollama_response(
         # Handle image if provided
         if image_path:
             try:
-                image = Image(value=Path(image_path))
-                message["images"] = [image]
+                if vision_model:
+                    # For vision models, pass the path directly
+                    message["images"] = [image_path]
+                else:
+                    # For other models, use the Image class
+                    image = Image(value=Path(image_path))
+                    message["images"] = [image]
             except Exception as e:
+                logger.error(f"Image processing error: {str(e)}")
                 return f"Image Error: {str(e)}"
 
         # Set model parameters
