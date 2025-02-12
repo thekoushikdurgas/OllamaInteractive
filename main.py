@@ -28,6 +28,28 @@ if "messages" not in st.session_state:
 # Model selection section
 st.sidebar.title("Chat Settings")
 
+# Model creation section
+st.sidebar.markdown("### Model Management")
+with st.sidebar.expander("Create Custom Model"):
+    new_model_name = st.text_input("Model Name", placeholder="my-assistant")
+    base_model = st.selectbox(
+        "Base Model",
+        options=["llama2", "llama2-uncensored", "mistral", "codellama"],
+        index=0
+    )
+    system_prompt = st.text_area(
+        "System Prompt",
+        placeholder="You are a helpful assistant..."
+    )
+    if st.button("Create Model"):
+        if new_model_name and system_prompt:
+            with st.spinner("Creating model..."):
+                if asyncio.run(create_model(new_model_name, base_model, system_prompt)):
+                    st.success(f"Model '{new_model_name}' created successfully!")
+                    st.experimental_rerun()
+                else:
+                    st.error("Failed to create model")
+
 # Model selection with description
 st.sidebar.markdown("### Available Models")
 st.sidebar.markdown("Choose a model to chat with:")
@@ -96,10 +118,30 @@ if selected_model:
 # Use selected_model instead of model variable
 model = selected_model
 
+# Fill-in-middle feature
+with st.sidebar.expander("Fill-in-middle Generation", expanded=False):
+    prefix = st.text_area("Prefix", placeholder="def function_name():")
+    suffix = st.text_area("Suffix", placeholder="    return result")
+    if st.button("Generate Middle"):
+        if prefix and suffix:
+            with st.spinner("Generating..."):
+                middle_text = asyncio.run(generate_fill_middle(
+                    prefix=prefix,
+                    suffix=suffix,
+                    model=model,
+                    temperature=temperature
+                ))
+                st.code(prefix + middle_text + suffix, language="python")
+
 # Advanced settings expander with improved UI
 with st.sidebar.expander("Advanced Settings"):
     col1, col2 = st.columns(2)
     with col1:
+        use_chat = st.checkbox(
+            "Use Chat Mode",
+            value=True,
+            help="Toggle between chat and generate mode"
+        )
         temperature = st.slider(
             "Temperature",
             min_value=0.1,
@@ -124,9 +166,34 @@ with st.sidebar.expander("Advanced Settings"):
             value=False,
             help="Allow model to use mathematical tools"
         )
+        use_vision = st.checkbox("Use Vision Model", value=False) # Added use_vision checkbox
+
 
 # Main chat interface
 st.title("Chat with Ollama 🤖")
+
+# XKCD Comic Analysis
+with st.sidebar.expander("XKCD Comic Analysis", expanded=False):
+    comic_num = st.number_input("Comic Number (optional)", min_value=1, value=None)
+    if st.button("Analyze Random Comic"):
+        with st.spinner("Analyzing comic..."):
+            comic_analysis = asyncio.run(analyze_xkcd_comic(comic_num))
+            if 'error' not in comic_analysis:
+                st.image(comic_analysis['image_url'], caption=f"XKCD #{comic_analysis['number']}")
+                st.markdown(f"**Title:** {comic_analysis['title']}")
+                st.markdown(f"**Alt Text:** {comic_analysis['alt']}")
+                st.markdown(f"**Link:** {comic_analysis['link']}")
+                st.markdown("**Analysis:**")
+                st.write(comic_analysis['analysis'])
+                
+                # Store analysis in MongoDB
+                save_message(
+                    f"Analyzed XKCD #{comic_analysis['number']}: {comic_analysis['analysis']}", 
+                    "assistant", 
+                    "llava"
+                )
+            else:
+                st.error(f"Failed to analyze comic: {comic_analysis['error']}")
 
 # Display status indicator
 if not available_models:
@@ -180,7 +247,7 @@ with st.container():
 
     if send_button and (user_input or image_path):
         # Save and display user message
-        save_message(user_input, "user", model)
+        save_message_with_embedding(user_input, "user", model)
         st.session_state.messages = get_chat_history()
 
         # Response container with loading indicator
@@ -190,7 +257,43 @@ with st.container():
             # Stream response with progress bar
             full_response = ""
             with st.spinner("AI is thinking..."):
-                async for response_chunk in get_ollama_response_async(
+                if use_generate:
+                    if stream:
+                        async for response_chunk in generate_stream_response(
+                            user_input,
+                            model,
+                            temperature=temperature
+                        ):
+                            full_response += response_chunk
+                            response_container.markdown(
+                                format_message(full_response, "assistant"),
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        response = asyncio.run(generate_direct_response(
+                            user_input,
+                            model,
+                            temperature=temperature,
+                            vision_model=use_vision #Added vision_model parameter
+                        ))
+                        full_response = response
+                        response_container.markdown(
+                            format_message(full_response, "assistant"),
+                            unsafe_allow_html=True
+                        )
+                else:
+                    async for response_chunk in get_ollama_response_async(
+                        user_input,
+                        model,
+                        temperature=temperature
+                    ):
+                        full_response += response_chunk
+                        response_container.markdown(
+                            format_message(full_response, "assistant"),
+                            unsafe_allow_html=True
+                        )
+                else:
+                    async for response_chunk in get_ollama_response_async(
                     user_input,
                     model,
                     stream=True,
@@ -215,7 +318,8 @@ with st.container():
                     user_input,
                     model,
                     temperature=temperature,
-                    image_path=image_path
+                    image_path=image_path,
+                    use_chat=use_chat
                 )
                 # Save and display assistant response
                 if isinstance(response, str):
@@ -232,6 +336,21 @@ with st.container():
             os.remove(image_path)
         # Rerun to update chat display
         st.experimental_rerun()
+
+# Semantic search
+with st.sidebar.expander("Semantic Search", expanded=False):
+    search_query = st.text_input("Search Chat History")
+    if search_query:
+        similar_messages = find_similar_messages(search_query, model)
+        for msg in similar_messages:
+            st.markdown(f"""
+            <div style='padding: 10px; border: 1px solid #ddd; margin: 5px 0;'>
+                <div>{msg['content']}</div>
+                <div style='color: #666; font-size: 0.8em;'>
+                    Similarity: {msg['similarity']:.2f}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # Clear chat button with confirmation in danger zone
 with st.sidebar.expander("Danger Zone", expanded=False):

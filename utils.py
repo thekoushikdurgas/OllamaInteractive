@@ -8,6 +8,24 @@ import logging
 
 logger = logging.getLogger(__name__) #Added logger
 
+async def generate_direct_response(
+    prompt: str,
+    model: str = "llama2",
+    temperature: float = 0.7
+) -> str:
+    """Generate direct response using Ollama generate endpoint"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.generate(
+            model=model,
+            prompt=prompt,
+            options={"temperature": temperature}
+        )
+        return response['response']
+    except Exception as e:
+        logger.error(f"Generate response failed: {str(e)}")
+        return f"Error: {str(e)}"
+
 async def get_ollama_response_async(
     prompt: str,
     model: str = "llama2",
@@ -100,7 +118,10 @@ def get_ollama_response(
     stream: bool = False,
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
-    image_path: Optional[str] = None
+    image_path: Optional[str] = None,
+    image_content: Optional[bytes] = None,
+    use_chat: bool = True,
+    vision_model: bool = False
 ) -> Union[str, Generator[str, None, None]]:
     """
     Get response from Ollama model with streaming support and image handling.
@@ -123,9 +144,15 @@ def get_ollama_response(
         # Handle image if provided
         if image_path:
             try:
-                image = Image(value=Path(image_path))
-                message["images"] = [image]
+                if vision_model:
+                    # For vision models, pass the path directly
+                    message["images"] = [image_path]
+                else:
+                    # For other models, use the Image class
+                    image = Image(value=Path(image_path))
+                    message["images"] = [image]
             except Exception as e:
+                logger.error(f"Image processing error: {str(e)}")
                 return f"Image Error: {str(e)}"
 
         # Set model parameters
@@ -151,12 +178,20 @@ def get_ollama_response(
                 return cached_response
 
             # Get chat response from Ollama
-            response: ChatResponse = ollama.chat(
-                model=model,
-                messages=[message],
-                options=options
-            )
-            response_text = response['message']['content']
+            if use_chat:
+                response = ollama.chat(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    options=options
+                )
+                response_text = response['message']['content']
+            else:
+                response = ollama.generate(
+                    model=model,
+                    prompt=prompt,
+                    options=options
+                )
+                response_text = response['response']
 
             # Cache the response
             cache_response(prompt, model, response_text)
@@ -191,15 +226,18 @@ def get_available_models() -> List[Dict[str, Any]]:
             model_info = {
                 'name': model.model,
                 'size_mb': f'{(model.size.real / 1024 / 1024):.2f}',
-                'details': {}
-            }
-            if model.details:
-                model_info['details'] = {
-                    'format': model.details.format,
-                    'family': model.details.family,
-                    'parameter_size': model.details.parameter_size,
-                    'quantization_level': model.details.quantization_level
+                'details': {},
+                'created_at': model.modified_at,
+                'digest': model.digest[:12] if model.digest else None,
+                'details': {
+                    'format': model.details.format if model.details else None,
+                    'family': model.details.family if model.details else None,
+                    'parameter_size': model.details.parameter_size if model.details else None,
+                    'quantization_level': model.details.quantization_level if model.details else None
                 }
+            }
+            # Store model info in MongoDB for history
+            store_model_info(model_info)
             models.append(model_info)
         logger.info(f"Successfully fetched {len(models)} models")
         return models
@@ -210,6 +248,66 @@ def get_available_models() -> List[Dict[str, Any]]:
             {'name': name, 'size_mb': 'N/A', 'details': {}} 
             for name in ["llama2", "mistral", "codellama"]
         ]
+
+async def create_model(name: str, base_model: str, system_prompt: str) -> bool:
+    """Create a new Ollama model with custom system prompt"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.create(
+            model=name,
+            from_=base_model,
+            system=system_prompt
+        )
+        logger.info(f"Model created successfully: {name}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create model: {str(e)}")
+        return False
+
+async def generate_stream_response(
+    prompt: str,
+    model: str = "llama2",
+    temperature: float = 0.7
+) -> Generator[str, None, None]:
+    """Stream generate response from Ollama model"""
+    try:
+        client = ollama.AsyncClient()
+        async for part in client.generate(
+            model=model,
+            prompt=prompt,
+            options={"temperature": temperature},
+            stream=True
+        ):
+            yield part['response']
+    except Exception as e:
+        logger.error(f"Generate streaming failed: {str(e)}")
+        yield f"Error: {str(e)}"
+
+async def generate_fill_middle(
+    prefix: str,
+    suffix: str,
+    model: str = "codellama",
+    temperature: float = 0,
+    top_p: float = 0.9
+) -> str:
+    """Generate text to fill between prefix and suffix"""
+    try:
+        client = ollama.AsyncClient()
+        response = await client.generate(
+            model=model,
+            prompt=prefix,
+            suffix=suffix,
+            options={
+                'num_predict': 128,
+                'temperature': temperature,
+                'top_p': top_p,
+                'stop': ['< EOT >'],
+            }
+        )
+        return response['response']
+    except Exception as e:
+        logger.error(f"Fill-in-middle generation failed: {str(e)}")
+        return f"Error: {str(e)}"
 
 def get_model_details(model: str) -> Dict[str, Any]:
     """
@@ -303,3 +401,37 @@ def create_tool_from_function(func: Any) -> Tool:
         return tool
     except Exception as e:
         raise ValueError(f"Failed to create tool from function: {str(e)}")
+async def analyze_xkcd_comic(comic_num: Optional[int] = None) -> Dict[str, Any]:
+    """Analyze XKCD comic using llava model"""
+    try:
+        async with httpx.AsyncClient() as client:
+            if not comic_num:
+                latest = await client.get('https://xkcd.com/info.0.json')
+                latest.raise_for_status()
+                comic_num = random.randint(1, latest.json().get('num'))
+            
+            comic = await client.get(f'https://xkcd.com/{comic_num}/info.0.json')
+            comic.raise_for_status()
+            comic_data = comic.json()
+            
+            raw = await client.get(comic_data.get('img'))
+            raw.raise_for_status()
+            
+            response = await get_ollama_response_async(
+                prompt='Explain this comic:',
+                model='llava',
+                image_content=raw.content,
+                vision_model=True
+            )
+            
+            return {
+                'number': comic_data.get('num'),
+                'title': comic_data.get('title'),
+                'alt': comic_data.get('alt'),
+                'link': f'https://xkcd.com/{comic_num}',
+                'image_url': comic_data.get('img'),
+                'analysis': response
+            }
+    except Exception as e:
+        logger.error(f"Failed to analyze XKCD comic: {str(e)}")
+        return {'error': str(e)}

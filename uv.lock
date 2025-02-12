@@ -1086,6 +1086,8 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "httpx" },
+    { name = "numpy" },
     { name = "ollama" },
     { name = "openai" },
     { name = "pymongo" },
@@ -1096,6 +1098,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "numpy", specifier = ">=2.2.2" },
     { name = "ollama", specifier = ">=0.4.7" },
     { name = "openai", specifier = ">=1.61.1" },
     { name = "pymongo", specifier = ">=4.11.1" },

@@ -110,3 +110,19 @@ def clear_chat_history():
     except Exception as e:
         logger.error(f"Failed to clear chat history: {str(e)}")
     return False
+
+def store_model_info(model_info: dict):
+    """Store model information in MongoDB"""
+    try:
+        db = get_db_connection()
+        if db is not None:
+            models = db['models']
+            model_info['last_seen'] = datetime.utcnow()
+            models.update_one(
+                {'name': model_info['name']},
+                {'$set': model_info},
+                upsert=True
+            )
+            logger.info(f"Model info stored: {model_info['name']}")
+    except Exception as e:
+        logger.error(f"Failed to store model info: {str(e)}")
