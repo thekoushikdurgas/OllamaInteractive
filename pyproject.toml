@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "httpx>=0.28.1",
+    "numpy>=2.2.2",
     "ollama>=0.4.7",
     "openai>=1.61.1",
     "pymongo>=4.11.1",
