@@ -172,6 +172,29 @@ with st.sidebar.expander("Advanced Settings"):
 # Main chat interface
 st.title("Chat with Ollama 🤖")
 
+# XKCD Comic Analysis
+with st.sidebar.expander("XKCD Comic Analysis", expanded=False):
+    comic_num = st.number_input("Comic Number (optional)", min_value=1, value=None)
+    if st.button("Analyze Random Comic"):
+        with st.spinner("Analyzing comic..."):
+            comic_analysis = asyncio.run(analyze_xkcd_comic(comic_num))
+            if 'error' not in comic_analysis:
+                st.image(comic_analysis['image_url'], caption=f"XKCD #{comic_analysis['number']}")
+                st.markdown(f"**Title:** {comic_analysis['title']}")
+                st.markdown(f"**Alt Text:** {comic_analysis['alt']}")
+                st.markdown(f"**Link:** {comic_analysis['link']}")
+                st.markdown("**Analysis:**")
+                st.write(comic_analysis['analysis'])
+                
+                # Store analysis in MongoDB
+                save_message(
+                    f"Analyzed XKCD #{comic_analysis['number']}: {comic_analysis['analysis']}", 
+                    "assistant", 
+                    "llava"
+                )
+            else:
+                st.error(f"Failed to analyze comic: {comic_analysis['error']}")
+
 # Display status indicator
 if not available_models:
     st.error("⚠️ Unable to connect to Ollama server. Please check if it's running.")

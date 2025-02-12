@@ -119,6 +119,7 @@ def get_ollama_response(
     temperature: float = 0.7,
     context: Optional[List[int]] = None,
     image_path: Optional[str] = None,
+    image_content: Optional[bytes] = None,
     use_chat: bool = True,
     vision_model: bool = False
 ) -> Union[str, Generator[str, None, None]]:
@@ -400,3 +401,37 @@ def create_tool_from_function(func: Any) -> Tool:
         return tool
     except Exception as e:
         raise ValueError(f"Failed to create tool from function: {str(e)}")
+async def analyze_xkcd_comic(comic_num: Optional[int] = None) -> Dict[str, Any]:
+    """Analyze XKCD comic using llava model"""
+    try:
+        async with httpx.AsyncClient() as client:
+            if not comic_num:
+                latest = await client.get('https://xkcd.com/info.0.json')
+                latest.raise_for_status()
+                comic_num = random.randint(1, latest.json().get('num'))
+            
+            comic = await client.get(f'https://xkcd.com/{comic_num}/info.0.json')
+            comic.raise_for_status()
+            comic_data = comic.json()
+            
+            raw = await client.get(comic_data.get('img'))
+            raw.raise_for_status()
+            
+            response = await get_ollama_response_async(
+                prompt='Explain this comic:',
+                model='llava',
+                image_content=raw.content,
+                vision_model=True
+            )
+            
+            return {
+                'number': comic_data.get('num'),
+                'title': comic_data.get('title'),
+                'alt': comic_data.get('alt'),
+                'link': f'https://xkcd.com/{comic_num}',
+                'image_url': comic_data.get('img'),
+                'analysis': response
+            }
+    except Exception as e:
+        logger.error(f"Failed to analyze XKCD comic: {str(e)}")
+        return {'error': str(e)}
