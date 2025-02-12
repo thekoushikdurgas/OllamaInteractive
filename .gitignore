@@ -26,13 +26,11 @@ ENV/
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 
 # Project specific
 uploaded_images/
-.env
 .streamlit/secrets.toml
 
 # Docker
@@ -47,3 +45,5 @@ data/
 # System
 .DS_Store
 Thumbs.db
+config.bat
+node_modules

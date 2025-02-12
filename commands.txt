@@ -1,0 +1,71 @@
+pip install -r requirements.txt
+streamlit run main.py
+
+git init
+git add .
+git commit -m "5-2-2024"
+git remote add origin https://github.com/thekoushikdurgas/ollamalocalchat.git
+git branch -M replit-agent
+git push -u origin replit-agent -f
+git pull origin replit-agent
+
+
+
+pip install ollama --upgrade
+
+mongodb+srv://prabal:BINYz3F3f1bQ3XBR@cluster0.utmbo.mongodb.net/
+
+
+git init
+git add .
+git commit -m "5-2-2024"
+git remote add origin https://github.com/thekoushikdurgas/deepseekstreamlit.git
+git branch -M main
+git push -u origin main -f
+
+git config --global user.email "koushik.btech.cse.19@nitap.ac.in"
+git config --global user.name "thekoushikdurgas"
+streamlit run filemanager.py
+
+
+
+Enpliment the Improvements  and now read all prompts and its answers give me full and final refractor code
+
+
+now read all prompts and its answers and give me full and final refractor streamlit codes according to filemanager.py,ai_client.py,project_explorer.py,ui_components.py,utils.py
+
+code_text = F"# 📄 File: {os.path.relpath(path, explorer.root_dir)}\n"+content+f"\n# Read {len(content)} characters from file '{path}' ({mimetypes.guess_type(path)[0]}) and  then you think how this streamlit code is improved response of prompts and atlast now apply this and give me full and final refractor streamlit codes according to filemanager.py,ai_client.py,project_explorer.py,ui_components.py,utils.py"
+
+
+read filemanager.py,ai_client.py,project_explorer.py,ui_components.py,utils.py and then solve
+
+and then give in whole codebase what changes
+
+
+
+flutter --version
+flutter doctor
+flutter doctor --android-licenses
+flutter run
+flutter pub get
+dart migrate
+
+flutter pub get
+
+
+
+
+
+
+
+uv run ruff check
+uv lockuv sync
+uv tool install ruff
+ruff --version
+uv python install 3.10
+uv venv --python 3.12.0
+
+uv pip compile docs/requirements.in \
+   --universal \
+   --output-file docs/requirements.txt
+uv pip sync docs/requirements.txt
