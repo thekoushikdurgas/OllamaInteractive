@@ -50,6 +50,19 @@ with st.sidebar.expander("Create Custom Model"):
                 else:
                     st.error("Failed to create model")
 
+# Model Processes Monitor
+st.sidebar.markdown("### Model Processes")
+processes = get_model_processes()
+for process in processes:
+    with st.sidebar.expander(f"🔄 {process['model']}", expanded=False):
+        st.write(f"**Digest:** {process['digest']}")
+        st.write(f"**Memory:** {process['size']}")
+        st.write(f"**VRAM:** {process['vram']}")
+        if process['details']:
+            st.write("**Details:**")
+            for key, value in process['details'].items():
+                st.write(f"- {key}: {value}")
+
 # Model selection with description
 st.sidebar.markdown("### Available Models")
 st.sidebar.markdown("Choose a model to chat with:")

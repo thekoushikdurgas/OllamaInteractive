@@ -309,6 +309,41 @@ async def generate_fill_middle(
         logger.error(f"Fill-in-middle generation failed: {str(e)}")
         return f"Error: {str(e)}"
 
+def get_model_processes() -> List[Dict[str, Any]]:
+    """Get information about running Ollama model processes"""
+    try:
+        response: ProcessResponse = ps()
+        processes = []
+        for model in response.models:
+            process_info = {
+                'model': model.model,
+                'digest': model.digest[:12] if model.digest else None,
+                'expires_at': model.expires_at,
+                'size': f"{model.size.real / 1024 / 1024:.2f}MB" if model.size else "Unknown",
+                'vram': f"{model.size_vram.real / 1024 / 1024:.2f}MB" if model.size_vram else "Unknown",
+                'details': model.details._asdict() if model.details else {}
+            }
+            processes.append(process_info)
+        return processes
+    except Exception as e:
+        logger.error(f"Failed to get model processes: {str(e)}")
+        return []
+
+async def load_model(model_name: str) -> bool:
+    """Load a model with progress tracking"""
+    try:
+        progress_states = set()
+        response = pull(model_name, stream=True)
+        for progress in response:
+            status = progress.get('status')
+            if status not in progress_states:
+                progress_states.add(status)
+                logger.info(f"Model loading status: {status}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to load model: {str(e)}")
+        return False
+
 def get_model_details(model: str) -> Dict[str, Any]:
     """
     Get detailed information about a specific model.
